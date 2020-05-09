@@ -1,9 +1,9 @@
-import express, { Request, Response, NextFunction } from "express";
+import express, { Application, Request, Response, NextFunction } from "express";
 import cors from "cors";
 import morgan from "morgan";
 import router from "./routes/api/v1";
 
-const app = express();
+const app: Application = express();
 
 // Middleware
 app.use(morgan("dev"));
