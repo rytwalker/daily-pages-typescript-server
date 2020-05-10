@@ -9,7 +9,7 @@ const errorHandler = (
   res: Response,
   statusCode: number,
   message: string
-) => {
+): void => {
   console.log(chalk.red(error));
   res.status(statusCode).json({ message });
 };
@@ -114,7 +114,7 @@ router.delete("/:pageId", async (req: Request, res: Response) => {
   try {
     const count = await remove(pageId);
     if (count) {
-      res.status(200).json({ message: "Note successfully removed" });
+      res.status(200).json({ message: "Daily Page successfully removed" });
     } else {
       errorHandler(customErrorMessage, res, 404, "404: Daily Page not found.");
     }
