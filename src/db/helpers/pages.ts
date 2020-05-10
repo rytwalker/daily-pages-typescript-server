@@ -10,7 +10,7 @@ export const get = async (id: string | null = null) => {
   try {
     if (id) {
       const page = await db("pages")
-        .select("id", "content", "created_at", "updated_at")
+        .select("id", "content", "created_at", "updated_at", "writer_id")
         .where({ id })
         .first();
 
@@ -18,6 +18,16 @@ export const get = async (id: string | null = null) => {
     }
 
     return await db("pages");
+  } catch (error) {
+    errorLog(error);
+  }
+};
+
+export const getWriterPages = async (writerId: string) => {
+  try {
+    return await db("pages")
+      .select("id", "content", "created_at", "updated_at")
+      .where({ writer_id: writerId });
   } catch (error) {
     errorLog(error);
   }

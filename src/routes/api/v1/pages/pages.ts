@@ -1,7 +1,14 @@
 import express, { Request, Response } from "express";
-import { get, insert, update, remove } from "../../../../db/helpers/pages";
 import chalk from "chalk";
 import { v4 } from "uuid";
+import {
+  get,
+  getWriterPages,
+  insert,
+  update,
+  remove
+} from "../../../../db/helpers/pages";
+import isAuth from "../../../../middleware/isAuth";
 const router = express.Router();
 
 const errorHandler = (
@@ -17,9 +24,10 @@ const errorHandler = (
 const customErrorMessage: string = "located in: ./src/routes/api/v1/pages.ts\n";
 
 // GET: api/v1/pages PERMISSIONS: USER or ADMIN
-router.get("/", async (_req: Request, res: Response) => {
+router.get("/", isAuth, async (req: Request, res: Response) => {
   try {
-    const pages = await get();
+    const { writerId } = req.writerData as any;
+    const pages = await getWriterPages(writerId);
     res.status(200).json(pages);
   } catch (error) {
     errorHandler(error, res, 500, "Server error: Something went wrong.");
@@ -27,13 +35,18 @@ router.get("/", async (_req: Request, res: Response) => {
 });
 
 // GET: api/v1/pages/:pageId PERMISSIONS: USER or ADMIN
-router.get("/:pageId", async (req: Request, res: Response) => {
+router.get("/:pageId", isAuth, async (req: Request, res: Response) => {
   try {
     const { pageId } = req.params;
+    const { writerId } = req.writerData as any;
     if (pageId) {
       const page = await get(pageId);
       if (page) {
-        res.status(200).json(page);
+        if (page.writer_id === writerId) {
+          res.status(200).json(page);
+        } else {
+          errorHandler(customErrorMessage, res, 401, "401: unauthorized");
+        }
       } else {
         errorHandler(
           customErrorMessage,
@@ -49,7 +62,7 @@ router.get("/:pageId", async (req: Request, res: Response) => {
 });
 
 // POST: api/v1/pages PERMISSIONS: USER or ADMIN
-router.post("/", async (req: Request, res: Response) => {
+router.post("/", isAuth, async (req: Request, res: Response) => {
   try {
     const { content, writerId } = req.body;
     if (content && writerId) {
@@ -78,7 +91,7 @@ router.post("/", async (req: Request, res: Response) => {
 });
 
 // PUT: api/v1/pages/update/{id} PERMISSIONS: USER or ADMIN
-router.put("/:pageId", async (req: Request, res: Response) => {
+router.put("/:pageId", isAuth, async (req: Request, res: Response) => {
   const { pageId } = req.params;
   const { content } = req.body;
 
@@ -109,7 +122,7 @@ router.put("/:pageId", async (req: Request, res: Response) => {
 });
 
 // DELETE: api/v1/pages/delete/{id} PERMISSIONS: USER or ADMIN
-router.delete("/:pageId", async (req: Request, res: Response) => {
+router.delete("/:pageId", isAuth, async (req: Request, res: Response) => {
   const { pageId } = req.params;
   try {
     const count = await remove(pageId);
