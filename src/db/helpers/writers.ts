@@ -13,35 +13,32 @@ export const get = async (
 ): Promise<Writer | Writer[] | void> => {
   try {
     if (id) {
-      const data = await db("writers as w")
-        .join("pages as p", "w.id", "p.writer_id")
+      const writerData = await db("writers as w")
         .join("settings as s", "w.id", "s.writer_id")
         .select(
-          "p.id",
           "w.email",
           "w.first_name",
           "w.last_name",
           "w.tokenVersion",
-          "p.content",
-          "p.created_at",
-          "p.updated_at",
           "s.minimalizm",
           "s.time_limit"
         )
-        .where({ "w.id": id });
+        .where({ "w.id": id })
+        .first();
 
       const writer: Writer = {
         id,
-        email: data[0].email,
-        firstName: data[0].first_name,
-        lastName: data[0].last_name,
-        tokenVersion: data[0].tokenVersion,
+        email: writerData.email,
+        firstName: writerData.first_name,
+        lastName: writerData.last_name,
+        tokenVersion: writerData.tokenVersion,
         settings: {
-          minimalizm: data[0].minimalizm,
-          timeLimit: data[0].time_limit
+          minimalizm: writerData.minimalizm,
+          timeLimit: writerData.time_limit
         }
       };
-      const pages: Page[] = data.map((d) => ({
+      const pageData = await db("pages").where({ writer_id: id });
+      const pages: Page[] = pageData.map((d) => ({
         id: d.id,
         content: d.content,
         createdAt: d.created_at,

@@ -106,7 +106,7 @@ export default class Writers {
       }
       // const token = generateToken(writer);
       sendRefreshToken(res, createRefreshToken(writer));
-
+      writer.firstName = writer.first_name;
       res.status(200).json({ accessToken: createAccessToken(writer), writer });
     } catch (error) {
       console.log(error);
@@ -160,6 +160,7 @@ export default class Writers {
   }
   static async refreshToken(req: Request, res: Response) {
     const token = req.cookies.rid;
+
     if (!token) {
       return res.send({ ok: false, accessToken: "" });
     }
@@ -169,22 +170,26 @@ export default class Writers {
       payload = verify(token, process.env.REFRESH_TOKEN_SECRET!);
     } catch (error) {
       console.log(error);
-      return res.send({ ok: false, accessToken: "" });
+      return res.status(400).json({ ok: false, accessToken: "" });
     }
 
     // token is valid and can send access token
-    const writer: any = await get(token.userId);
+    const writer: any = await get(payload.writerId);
 
     if (!writer) {
-      return res.send({ ok: false, accessToken: "" });
+      return res.status(400).json({ ok: false, accessToken: "" });
     }
 
     if (writer.tokenVersion !== payload.tokenVersion) {
-      return res.send({ ok: false, accessToken: "" });
+      return res.status(400).json({ ok: false, accessToken: "" });
     }
 
     sendRefreshToken(res, createRefreshToken(writer));
 
-    return res.send({ ok: true, accessToken: createAccessToken(writer) });
+    return res.status(200).json({
+      ok: true,
+      accessToken: createAccessToken(writer),
+      writer
+    });
   }
 }
