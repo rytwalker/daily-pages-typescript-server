@@ -1,6 +1,11 @@
 import { db } from "../dbConfig";
 import chalk from "chalk";
 
+const errorLog = (error: any) => {
+  console.log(chalk.red(error));
+  console.log(chalk.red("located in: ./src/db/helpers.writers.ts\n"));
+};
+
 export const get = async (id: string | null = null) => {
   try {
     if (id) {
@@ -69,5 +74,23 @@ export const get = async (id: string | null = null) => {
   } catch (error) {
     console.log(chalk.red(error));
     console.log(chalk.red("located in: ./src/db/helpers.writers.ts\n"));
+  }
+};
+
+export const update = async (changes: any, id: any) => {
+  try {
+    await db("writers").where({ id }).update(changes);
+    return get(id);
+  } catch (error) {
+    errorLog(error);
+  }
+};
+
+export const remove = async (id: any) => {
+  try {
+    const count = await db("writers").where({ id }).del();
+    return count;
+  } catch (error) {
+    errorLog(error);
   }
 };
