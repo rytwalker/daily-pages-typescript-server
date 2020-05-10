@@ -1,6 +1,6 @@
 import express from "express";
-import isAuth from "../../../../middleware/isAuth";
 import Pages from "../../../../controllers/Pages";
+import isAuth from "../../../../middleware/isAuth";
 
 const router = express.Router();
 // GET: api/v1/pages PERMISSIONS: USER or ADMIN
