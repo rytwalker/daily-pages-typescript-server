@@ -1,12 +1,16 @@
 import { db } from "../dbConfig";
 import chalk from "chalk";
+import { Writer } from "../../types/Writer";
+import { Page } from "../../types/Page";
 
 const errorLog = (error: any) => {
   console.log(chalk.red(error));
   console.log(chalk.red("located in: ./src/db/helpers.writers.ts\n"));
 };
 
-export const get = async (id: string | null = null) => {
+export const get = async (
+  id: string | null = null
+): Promise<Writer | Writer[] | void> => {
   try {
     if (id) {
       const data = await db("writers as w")
@@ -17,6 +21,7 @@ export const get = async (id: string | null = null) => {
           "w.email",
           "w.first_name",
           "w.last_name",
+          "w.tokenVersion",
           "p.content",
           "p.created_at",
           "p.updated_at",
@@ -25,22 +30,25 @@ export const get = async (id: string | null = null) => {
         )
         .where({ "w.id": id });
 
-      const writer = {
+      const writer: Writer = {
         id,
         email: data[0].email,
         firstName: data[0].first_name,
         lastName: data[0].last_name,
+        tokenVersion: data[0].tokenVersion,
         settings: {
           minimalizm: data[0].minimalizm,
           timeLimit: data[0].time_limit
-        },
-        pages: data.map((d) => ({
-          id: d.id,
-          content: d.content,
-          createdAt: d.created_at,
-          updatedAt: d.updated_at
-        }))
+        }
       };
+      const pages: Page[] = data.map((d) => ({
+        id: d.id,
+        content: d.content,
+        createdAt: d.created_at,
+        updatedAt: d.updated_at
+      }));
+
+      writer.pages = pages;
       return writer;
     }
 
@@ -51,18 +59,20 @@ export const get = async (id: string | null = null) => {
         "w.email",
         "w.first_name",
         "w.last_name",
+        "w.tokenVersion",
         "s.minimalizm",
         "s.time_limit"
       );
 
     const pages = await db("pages");
 
-    const writers = allWritersData.map((writer) => {
+    const writers: Writer[] = allWritersData.map((writer) => {
       return {
         id: writer.id,
         email: writer.email,
         firstName: writer.first_name,
-        last_name: writer.last_name,
+        lastName: writer.last_name,
+        tokenVersion: writer.tokenVersion,
         settings: {
           minimalizm: writer.minimalizm,
           timeLimit: writer.time_limit

@@ -5,7 +5,13 @@ import { get, remove, update } from "../db/helpers/writers";
 import { db } from "../db/dbConfig";
 import { errorHandler } from "../helpers/errorHandler";
 import { isValidEmail } from "../helpers/isValidEmail";
-import { generateToken } from "../helpers/generateToken";
+import { verify } from "jsonwebtoken";
+import {
+  sendRefreshToken,
+  createRefreshToken,
+  createAccessToken
+} from "../helpers/auth";
+import { Writer } from "../types/Writer";
 
 const customErrorMessage: string =
   "located in: ./src/routes/api/v1/writers.ts\n";
@@ -98,8 +104,10 @@ export default class Writers {
       if (!passwordsMatch) {
         return res.status(400).json("Bad request: email or password is wrong.");
       }
-      const token = generateToken(writer);
-      res.status(201).json({ message: "logged in", token });
+      // const token = generateToken(writer);
+      sendRefreshToken(res, createRefreshToken(writer));
+
+      res.status(200).json({ accessToken: createAccessToken(writer), writer });
     } catch (error) {
       console.log(error);
       res.status(500).json({ message: "Server Error: Something went wrong." });
@@ -149,5 +157,34 @@ export default class Writers {
     } catch (error) {
       errorHandler(error, res, 500, "Server error: Something went wrong.");
     }
+  }
+  static async refreshToken(req: Request, res: Response) {
+    const token = req.cookies.rid;
+    if (!token) {
+      return res.send({ ok: false, accessToken: "" });
+    }
+
+    let payload: any = null;
+    try {
+      payload = verify(token, process.env.REFRESH_TOKEN_SECRET!);
+    } catch (error) {
+      console.log(error);
+      return res.send({ ok: false, accessToken: "" });
+    }
+
+    // token is valid and can send access token
+    const writer: any = await get(token.userId);
+
+    if (!writer) {
+      return res.send({ ok: false, accessToken: "" });
+    }
+
+    if (writer.tokenVersion !== payload.tokenVersion) {
+      return res.send({ ok: false, accessToken: "" });
+    }
+
+    sendRefreshToken(res, createRefreshToken(writer));
+
+    return res.send({ ok: true, accessToken: createAccessToken(writer) });
   }
 }

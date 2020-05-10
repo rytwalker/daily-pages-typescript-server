@@ -21,4 +21,7 @@ router.put("/:id", Writers.updatePassword);
 // DELETE: api/v1/writers/{id} PERMISSIONS: USER or ADMIN
 router.delete("/:id", Writers.deleteWriter);
 
+// REFRESH TOKEN
+router.post("/refresh-token", Writers.refreshToken);
+
 export default router;
